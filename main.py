@@ -1,9 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 import datetime
+from db_utils import save_job_data
 
-keyword=input("키워드를 입력하세요 : ")
-allPage=input("몇 페이지까지 추출하시겠어요?")
+keyword = input("키워드를 입력하세요 (기본값: 'IT') : ") or "IT"
+allPage = input("몇 페이지까지 추출하시겠어요? (기본값: 1) : ") or "1"
 
 for page in range(1, int(allPage)+1):
     soup = requests.get('https://www.saramin.co.kr/zf_user/search?search_area=main&search_done=y&search_optional_item=n&searchType=search&searchword={}&recruitSort=relation&recruitPageCount=100'.format(keyword, page), headers={'User-Agent': 'Mozilla/5.0'})
@@ -22,7 +23,23 @@ for page in range(1, int(allPage)+1):
             requirement=job.select('div.job_condition > span')[2].text.strip()
             jobtype=job.select('div.job_condition > span')[3].text.strip()
 
+            # 크롤링한 데이터를 사전 형태로 정리
+            job_data = {
+                'date': today,
+                'title': title,
+                'company': company,
+                'url': url,
+                'deadline': deadline,
+                'location': location,
+                'experience': experience,
+                'requirement': requirement,
+                'jobtype': jobtype,
+            }
+
+            # 데이터 저장 호출
+            save_job_data(job_data)
+
             print(today, title,company,url, deadline,location,experience,jobtype)
 
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Error processing job: {e}")
